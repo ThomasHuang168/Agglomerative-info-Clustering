@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 2.8)
+project( AIC )
+include_directories(.)
+find_package( OpenCV REQUIRED )
+add_executable( AIC Demo.cpp )
+target_link_libraries( AIC ${OpenCV_LIBS} )
