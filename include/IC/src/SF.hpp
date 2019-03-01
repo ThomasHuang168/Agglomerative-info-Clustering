@@ -83,6 +83,10 @@ namespace IC {
 		}
 
 		double variance (vector <double> v) const {
+			if (v.size() < 2)
+			{
+				return 0.0;
+			}
 			double sum = std::accumulate(std::begin(v), std::end(v), 0.0);
 			double mean =  sum / v.size();
 		
@@ -91,7 +95,7 @@ namespace IC {
 				accum  += (d-mean)*(d-mean);
 			});
 
-			double var = accum/(v.size());
+			double var = accum/(v.size() - 1);
 			return var;
 		}
 
@@ -156,7 +160,13 @@ namespace IC {
 				false, // use train data
 				results // cv::noArray()
 			);
-			return train_performance;
+
+			cv::Mat Test_results;
+			float test_performance = dtree->calcError(dataset,
+				false, // use train data
+				Test_results // cv::noArray()
+			);
+			return test_performance;
 		}
 
 		/*
