@@ -8,6 +8,7 @@
 #include <vector>
 #include <Eigen/Dense>
 #include <opencv2/opencv.hpp>
+#include "CART.hpp"
 
 using namespace std;
 using namespace Eigen;
@@ -40,34 +41,101 @@ namespace IC {
 			Genes = G;
 		}
 
-		Ptr<ml::TrainData> get_dataset(const vector<size_t> &X, const size_t y) const{ 
-			vector<vector<double>> genes;
-			for (auto& row : Genes) {               /* iterate over rows */
-				vector<double> temp;
-				for (auto &k : X)  {
-					temp.push_back(row[k]);
-				}
-				genes.push_back(temp);
+		Ptr<ml::TrainData> get_dataset(const vector<size_t> &X, const size_t y) const
+		{ 
+			{
+				//vector<vector<double>> genes;
+				//for (auto& row : Genes) {               /* iterate over rows */
+				//	vector<double> temp;
+				//	for (auto &k : X)  {
+				//		temp.push_back(row[k]);
+				//	}
+				//	genes.push_back(temp);
+				//}
+				//
+
+				//vector<vector<double>> target;
+				//for (auto& row : Genes) {               /* iterate over rows */
+				//	vector<double> temp{ row[y] }; 
+				//	target.push_back(temp);
+				//}
+
+				//cv::Mat labels = toMat(target);
+				//cv::Mat mat = toMat(genes);
+
+				//// cout << mat << endl;
+				//// cout << labels << endl;
+				//Ptr<ml::TrainData> data_set =
+				//	cv::ml::TrainData::create(mat, 
+				//	cv::ml::COL_SAMPLE,
+				//	labels
+				//	);
 			}
+
+			{
+				//vector<double> genes;
+				//for (auto& row : Genes) {               /* iterate over rows */
+				//	for (auto &k : X)  {
+				//		genes.push_back(row[k]);
+				//	}
+				//}
 			
 
-			vector<vector<double>> target;
-			for (auto& row : Genes) {               /* iterate over rows */
-				vector<double> temp{ row[y] }; 
-				target.push_back(temp);
+				//vector<double> target;
+				//for (auto& row : Genes) {               /* iterate over rows */
+				//	target.push_back(row[y]);
+				//}
+
+				//cv::Mat labels = toRowMat(target);
+				//cv::Mat mat = toRowMat(genes);
+
+				//// cout << mat << endl;
+				//// cout << labels << endl;
+				//Ptr<ml::TrainData> data_set =
+				//	cv::ml::TrainData::create(mat, 
+				//	cv::ml::ROW_SAMPLE,
+				//	labels
+				//	);
+				//return data_set;
 			}
 
-			cv::Mat labels = toMat(target);
-			cv::Mat mat = toMat(genes);
+			{
+				vector<vector<double>> genes;
+				for (auto& row : Genes) {               /* iterate over rows */
+					vector<double> temp;
+					for (auto &k : X) {
+						temp.push_back(row[k]);
+						temp.push_back(row[y]);
+						genes.push_back(temp);
+					}
+				}
 
-			// cout << mat << endl;
-			// cout << labels << endl;
-			Ptr<ml::TrainData> data_set =
-				cv::ml::TrainData::create(mat, 
-				cv::ml::ROW_SAMPLE, 
-				labels
-				);
-			return data_set;
+				cv::Mat mat = toMat(genes);
+
+				// cout << mat << endl;
+				// cout << labels << endl;
+				Ptr<ml::TrainData> data_set =
+					cv::ml::TrainData::create(mat,
+						cv::ml::COL_SAMPLE,
+						noArray()
+					);
+				return data_set;
+			}
+		}
+
+		template<typename _Tp> static  cv::Mat toRowMat(const vector<_Tp> vecIn) 
+		{
+			cv::Mat_<_Tp> matOut(1, vecIn.size(), CV_32F);
+			for (int i = 0; i < matOut.rows; ++i) 
+			{
+				for (int j = 0; j < matOut.cols; ++j) 
+				{
+					matOut(i, j) = vecIn.at(j);
+				}
+			}
+			Mat formatted_matOut;
+			matOut.convertTo(formatted_matOut, CV_32F);
+			return formatted_matOut;
 		}
 
 		template<typename _Tp> static  cv::Mat toMat(const vector<vector<_Tp> > vecIn) {
@@ -104,59 +172,61 @@ namespace IC {
 		}
 
 		double mse (const Ptr<ml::TrainData> dataset) const {
-			// Thomas
-			// train the cart algorithm and return the mse loss
+			{
+				// Thomas
+				// train the cart algorithm and return the mse loss
 
-			int n_samples = dataset->getNSamples();
-			if (n_samples == 0) {
-				cerr << "No data";
-				exit(-1);
+				int n_samples = dataset->getNSamples();
+				if (n_samples == 0) {
+					cerr << "No data";
+					exit(-1);
+				}
+				// else {
+				// 	cout << "Read " << n_samples << " samples" << endl;
+				// }
+
+				// Split the data, so that 90% is train data
+				//
+				dataset->setTrainTestSplitRatio(0.50, false);
+				int n_train_samples = dataset->getNTrainSamples();
+				int n_test_samples = dataset->getNTestSamples();
+				cout << "Found " << n_train_samples << " Train Samples, and "
+					<< n_test_samples << " Test Samples" << endl;
+
+				// Create a DTrees classifier.
+				//
+				cv::Ptr<cv::ml::DTrees> dtree = cv::ml::DTrees::create();
+			
+				// set parameters
+				float _priors[] = { 1.0, 10.0 };
+				cv::Mat priors(1, 2, CV_32F, _priors);
+				dtree->setMaxDepth(5);
+				dtree->setMinSampleCount(10);
+				dtree->setRegressionAccuracy(0.01f);
+				dtree->setUseSurrogates(false /* true */);
+				dtree->setMaxCategories(15);
+				dtree->setCVFolds(0 /*10*/); // nonzero causes core dump
+				dtree->setUse1SERule(true);
+				dtree->setTruncatePrunedTree(true);
+				dtree->setPriors( priors );
+				dtree->setPriors(cv::Mat()); // ignore priors for now...
+			
+				// Now train the model
+				// NB: we are only using the "train" part of the data set
+				//
+				dtree->train(dataset);
+
+				// Having successfully trained the data, we should be able
+				// to calculate the error on both the training data, as well
+				// as the test data that we held out.
+				//
+				cv::Mat results;
+				float train_performance = dtree->calcError(dataset,
+					true, // use test data
+					results // cv::noArray()
+				);
+				return train_performance;
 			}
-			// else {
-			// 	cout << "Read " << n_samples << " samples" << endl;
-			// }
-
-			// Split the data, so that 90% is train data
-			//
-			dataset->setTrainTestSplitRatio(0.90, false);
-			int n_train_samples = dataset->getNTrainSamples();
-			int n_test_samples = dataset->getNTestSamples();
-			// cout << "Found " << n_train_samples << " Train Samples, and "
-			// 	<< n_test_samples << " Test Samples" << endl;
-
-			// Create a DTrees classifier.
-			//
-			cv::Ptr<cv::ml::RTrees> dtree = cv::ml::RTrees::create();
-			
-			// set parameters
-			float _priors[] = { 1.0, 10.0 };
-			cv::Mat priors(1, 2, CV_32F, _priors);
-			dtree->setMaxDepth(5);
-			dtree->setMinSampleCount(10);
-			dtree->setRegressionAccuracy(0.01f);
-			dtree->setUseSurrogates(false /* true */);
-			dtree->setMaxCategories(15);
-			dtree->setCVFolds(0 /*10*/); // nonzero causes core dump
-			dtree->setUse1SERule(true);
-			dtree->setTruncatePrunedTree(true);
-			dtree->setPriors( priors );
-			dtree->setPriors(cv::Mat()); // ignore priors for now...
-			
-			// Now train the model
-			// NB: we are only using the "train" part of the data set
-			//
-			dtree->train(dataset);
-
-			// Having successfully trained the data, we should be able
-			// to calculate the error on both the training data, as well
-			// as the test data that we held out.
-			//
-			cv::Mat results;
-			float train_performance = dtree->calcError(dataset,
-				false, // use train data
-				results // cv::noArray()
-			);
-			return train_performance;
 		}
 
 		/*
@@ -164,27 +234,35 @@ namespace IC {
 		@param B subvector of elements from the ground set.
 		@return Entropy of the gaussian subvector indexed by elements in B.
 		*/
-		double operator() (const vector<size_t> &B) const {
+		double operator() (const vector<size_t> &B) const 
+		{
 			// Handason
 			size_t n = B.size();
-			vector<size_t> B_ = B;
-			sort(B_.begin(), B_.end());
 			double h = 0;
 			// H(z1, z2, z3) = H(z1) + H(z2|z1) + H(z3|x1, x2)
-			for (size_t i = 0; i < n; i++){
-				if (i == 0){
+			for (size_t i = 0; i < n; i++)
+			{
+				if (i == 0)
+				{
 					// H(z0) = variance of gene 0
-					vector<double> genes_i = get_column_vector(B_[i]);
+					vector<double> genes_i = get_column_vector(B[i]);
 					h += variance(genes_i);  // variance of genes i
-				} else {
+				} 
+				else 
+				{
 					// H(z1|z0), H(z2|x0, x1), ...
 					// X = [0], y = 1, ..., X = [0, 1], y = 2, ...
 					vector<size_t> X(i);
-					for (size_t j = 0; j < i; j++){
-						X[j] = B_[j];
+					for (size_t j = 0; j < i; j++)
+					{
+						X[j] = B[j];
 					}
-					Ptr<ml::TrainData> temp_dataset = get_dataset(X, B[i]);
-					h += mse(temp_dataset);
+					//Ptr<ml::TrainData> temp_dataset = get_dataset(X, B[i]);
+					//h += mse(temp_dataset);
+					CART CART;
+					CART.Set_dataset(Genes, X, B[i], true);
+					CART.Learn();
+					h += CART.Evaluate(EVAL_MODE_MSE);
 				}
 			}
 			

@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 2.8)
 
 project( AIC )
-add_compile_options(-std=c++11)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONs OFF)
 
 include_directories(.)
 find_package( OpenCV REQUIRED )
