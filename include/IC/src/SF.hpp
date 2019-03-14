@@ -9,6 +9,8 @@
 #include <Eigen/Dense>
 #include <opencv2/opencv.hpp>
 #include "CART.hpp"
+#include <fstream>
+#include <stdlib.h>
 
 using namespace std;
 using namespace Eigen;
@@ -562,5 +564,75 @@ namespace IC {
 		return min_norm_base(f, 1E-10, 1E-15);
 	}
 
+
+	class DataPreprocessing {
+	public:
+		virtual bool loadFile(string filename, size_t mode = 0) = 0;
+		virtual bool fillMissingData(size_t mode = 0) = 0;
+		virtual bool normalize(size_t mode = 0) = 0;
+		virtual bool quantize(size_t mode = 0) = 0;
+	};
+
+	class CSV : public DataPreprocessing {
+	public:
+		typedef enum ENUM_CSV_MODE {
+			CSV_DEFAULT = 0x0,
+			CSV_VERBOSE = 0x1
+		}CSV_MODE;
+
+		vector<vector<double>> data;
+
+		vector<size_t> MissingDataRow;
+		vector<size_t> MissingDataCol;
+
+		bool loadFile(string filename, size_t mode) {
+			ifstream f;
+			f.open(filename.c_str());
+			if (!f.is_open())
+			{
+				std::cerr << "error: file open failed '" << filename << "'.\n";
+				return false;
+			}
+			string line, val;
+			size_t j = 0;
+			while (std::getline(f, line)) {        /* read each line */
+				std::vector<double> v;                 /* row vector v */
+				std::stringstream s(line);         /* stringstream line */
+				size_t i = 0;
+				while (getline(s, val, ','))       /* get each value (',' delimited) */
+				{
+					double value = 0.0;
+					char *endptr = 0; 
+					value = strtod(val.c_str(), &endptr);
+					if (*endptr != '\0' || endptr == val.c_str()) {
+						value = 0.0;
+						MissingDataRow.push_back(i);
+						MissingDataRow.push_back(j);
+					}
+					v.push_back(value);  /* add to row vector */
+					i++;
+				}
+				data.push_back(v);                /* add row vector to array */
+				j++;
+			}
+			if (CSV_VERBOSE & mode) {
+				for (auto& row : data) {               /* iterate over rows */
+					for (auto& val : row)               /* iterate over vals */
+						std::cout << val << "  ";       /* output value      */
+					std::cout << "\n";                  /* tidy up with '\n' */
+				}
+			}
+			return true;
+		}
+		bool fillMissingData(size_t mode) {
+			return true;
+		}
+		bool normalize(size_t mode) {
+			return true;
+		}
+		bool quantize(size_t mode) {
+			return true;
+		}
+	};
 }
 #endif
