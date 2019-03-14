@@ -8,9 +8,7 @@
 #include <vector>
 #include <Eigen/Dense>
 #include <opencv2/opencv.hpp>
-#include "CART.hpp"
-#include <fstream>
-#include <stdlib.h>
+#include <string>
 
 using namespace std;
 using namespace Eigen;
@@ -38,9 +36,11 @@ namespace IC {
 	class CartEntropy : public SF {
 	private:
 		vector<vector<double>> Genes; // genes matrix rows are condition, columns are genes
+		string Model;
 	public:
-		CartEntropy(vector<vector<double>> G) {
+		CartEntropy(vector<vector<double>> G, string model) {
 			Genes = G;
+			Model = model;
 		}
 
 		Ptr<ml::TrainData> get_dataset(const vector<size_t> &X, const size_t y) const
@@ -101,43 +101,16 @@ namespace IC {
 				//return data_set;
 			}
 
-			{
-				vector<vector<double>> genes;
-				for (auto& row : Genes) {               /* iterate over rows */
-					vector<double> temp;
-					for (auto &k : X) {
-						temp.push_back(row[k]);
-						temp.push_back(row[y]);
-						genes.push_back(temp);
-					}
-				}
-
-				cv::Mat mat = toMat(genes);
-
-				// cout << mat << endl;
-				// cout << labels << endl;
-				Ptr<ml::TrainData> data_set =
-					cv::ml::TrainData::create(mat,
-						cv::ml::COL_SAMPLE,
-						noArray()
-					);
-				return data_set;
-			}
-		}
-
-		template<typename _Tp> static  cv::Mat toRowMat(const vector<_Tp> vecIn) 
-		{
-			cv::Mat_<_Tp> matOut(1, vecIn.size(), CV_32F);
-			for (int i = 0; i < matOut.rows; ++i) 
-			{
-				for (int j = 0; j < matOut.cols; ++j) 
-				{
-					matOut(i, j) = vecIn.at(j);
-				}
-			}
-			Mat formatted_matOut;
-			matOut.convertTo(formatted_matOut, CV_32F);
-			return formatted_matOut;
+			cv::Mat labels = toMat(target);
+			cv::Mat mat = toMat(genes);
+			// cout << mat << endl;
+			// cout << labels << endl;
+			Ptr<ml::TrainData> data_set =
+				cv::ml::TrainData::create(mat, 
+				cv::ml::ROW_SAMPLE, 
+				labels
+				);
+			return data_set;
 		}
 
 		template<typename _Tp> static  cv::Mat toMat(const vector<vector<_Tp> > vecIn) {
@@ -172,32 +145,67 @@ namespace IC {
 			}
 			return col_vector;
 		}
+		
+		double svr_mse (const Ptr<ml::TrainData> dataset) const {
+			int n_samples = dataset->getNSamples();
+			if (n_samples == 0) {
+				cerr << "No data";
+				exit(-1);
+			}
+			dataset->setTrainTestSplitRatio(0.90, false);
+			int n_train_samples = dataset->getNTrainSamples();
+			int n_test_samples = dataset->getNTestSamples();
+
+			cv::Ptr<cv::ml::SVM> svr = cv::ml::SVM::create();
+			svr->setKernel(cv::ml::SVM::KernelTypes::LINEAR);
+			svr->setType(cv::ml::SVM::Types::EPS_SVR);//For n-class classification problem with imperfect class separation
+			//svr->setC(5);
+			//svr->setP(0.01);
+			svr->setGamma(10.0);//for poly
+			svr->setDegree(0.1);//for poly
+			svr->setCoef0(0.0);//for poly
+			svr->setNu(0.1);
+			svr->setP(0.1);
+
+			// cout << "Training Support Vector Regressor..." << endl;
+			//svr->trainAuto(trainData);
+			svr->train(dataset);
+			bool trained = svr->isTrained();
+			if (!trained){
+				cout << "error occur during SVR training" << endl;
+			}
+			cv::Mat results;
+			float train_performance = svr->calcError(dataset,
+				true, // test error
+				results // cv::noArray()
+			);
+			return train_performance;
+		}
 
 		double mse (const Ptr<ml::TrainData> dataset) const {
 			{
 				// Thomas
 				// train the cart algorithm and return the mse loss
 
-				int n_samples = dataset->getNSamples();
-				if (n_samples == 0) {
-					cerr << "No data";
-					exit(-1);
-				}
-				// else {
-				// 	cout << "Read " << n_samples << " samples" << endl;
-				// }
+			int n_samples = dataset->getNSamples();
+			if (n_samples == 0) {
+				cerr << "No data";
+				exit(-1);
+			}
+			// else {
+			// 	cout << "Read " << n_samples << " samples" << endl;
+			// }
 
-				// Split the data, so that 90% is train data
-				//
-				dataset->setTrainTestSplitRatio(0.50, false);
-				int n_train_samples = dataset->getNTrainSamples();
-				int n_test_samples = dataset->getNTestSamples();
-				cout << "Found " << n_train_samples << " Train Samples, and "
-					<< n_test_samples << " Test Samples" << endl;
+			// Split the data, so that 90% is train data
+			//
+			dataset->setTrainTestSplitRatio(0.90, false);
+			int n_train_samples = dataset->getNTrainSamples();
+			int n_test_samples = dataset->getNTestSamples();
+			// cout << "Found " << n_train_samples << " Train Samples, and "
+			// 	<< n_test_samples << " Test Samples" << endl;
 
-				// Create a DTrees classifier.
-				//
-				cv::Ptr<cv::ml::DTrees> dtree = cv::ml::DTrees::create();
+			// Create a DTrees
+			cv::Ptr<cv::ml::RTrees> dtree = cv::ml::RTrees::create();
 			
 				// set parameters
 				float _priors[] = { 1.0, 10.0 };
@@ -213,22 +221,20 @@ namespace IC {
 				dtree->setPriors( priors );
 				dtree->setPriors(cv::Mat()); // ignore priors for now...
 			
-				// Now train the model
-				// NB: we are only using the "train" part of the data set
-				//
-				dtree->train(dataset);
-
-				// Having successfully trained the data, we should be able
-				// to calculate the error on both the training data, as well
-				// as the test data that we held out.
-				//
-				cv::Mat results;
-				float train_performance = dtree->calcError(dataset,
-					true, // use test data
-					results // cv::noArray()
-				);
-				return train_performance;
-			}
+			// Now train the model
+			// NB: we are only using the "train" part of the data set
+			//
+			dtree->train(dataset);
+			// Having successfully trained the data, we should be able
+			// to calculate the error on both the training data, as well
+			// as the test data that we held out.
+			//
+			cv::Mat results;
+			float train_performance = dtree->calcError(dataset,
+				true, // test error
+				results // cv::noArray()
+			);
+			return train_performance;
 		}
 
 		/*
@@ -255,26 +261,33 @@ namespace IC {
 					// H(z1|z0), H(z2|x0, x1), ...
 					// X = [0], y = 1, ..., X = [0, 1], y = 2, ...
 					vector<size_t> X(i);
-					for (size_t j = 0; j < i; j++)
-					{
-						X[j] = B[j];
+					// cout<<i<<endl;
+					for (size_t j = 0; j < i; j++){
+						// cout << "j: " << j << endl;
+						// cout<<B_[j]<<" ";
+						X[j] = B_[j];
 					}
-					//Ptr<ml::TrainData> temp_dataset = get_dataset(X, B[i]);
-					//h += mse(temp_dataset);
-					CART CART;
-					CART.Set_dataset(Genes, X, B[i], true);
-					CART.Learn();
-					h += CART.Evaluate(EVAL_MODE_MSE);
+					Ptr<ml::TrainData> temp_dataset = get_dataset(X, B_[i]);
+					// cout << "mse: " << mse(temp_dataset) << endl;
+					if (Model == "cart"){
+						h += mse(temp_dataset);
+					} else if (Model == "svr"){
+						h += svr_mse(temp_dataset);
+					} else {
+						cout << "Model only support svr / cart" << endl;
+						cout << "Program Exit!";
+						exit(0);
+					}
 				}
 			}
 			
-			cout << "for B = {";
-			for (auto i: B)
- 				cout << i << ' ';
-			cout << "}" << endl;
+			// cout << "for B = {";
+			// for (auto i: B)
+ 			// 	cout << i << ' ';
+			// cout << "}" << endl;
 
-			cout << "cart entropy: " << h << "\n" << endl;
-			// return 1;
+			// cout << "cart entropy: " << h << "\n" << endl;
+			// // return 1;
 			return h;
 		}
 
@@ -284,46 +297,6 @@ namespace IC {
 		}
 	};
 
-	class HardCodeEntropy : public SF {
-	// private:
-	public:
-		HardCodeEntropy(int x){
-
-		}
-		double operator() (const vector<size_t> &B) const {
-			size_t n = B.size();
-			vector<size_t> B_ = B;
-			sort(B_.begin(), B_.end());
-			std::vector<size_t> v1 = { 0 };
-			std::vector<size_t> v2 = { 1 };
-			std::vector<size_t> v3 = { 2 };
-			std::vector<size_t> v4 = { 0, 1 };
-			std::vector<size_t> v5 = { 0, 2 };
-			std::vector<size_t> v6 = { 1, 2 };
-			std::vector<size_t> v7 = { 0, 1, 2 };
-			if ((B_ == v1) || (B_ == v2) || (B_ == v3)) {
-				return 0;
-				// return 1;
-			} else if (B_ == v4) {
-				return 1;
-				// return 1.3;
-			} else if (B_ == v5) {
-				return 1;
-				// return 1.7;
-			} else if (B_ == v6) {
-				return 1;
-				// return 1.7;
-			} else if (B_ == v7) {
-				return 2;
-				// return 2.1;
-			}
-			return 2.1;
-		}
-
-		size_t size() const {
-			return 3;
-		}
-	};
 
 	class GaussianEntropy : public SF {
 	private:
