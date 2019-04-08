@@ -11,255 +11,40 @@ mkdir build
 cd build 
 cmake .. 
 make 
-./AIC ../../data/test.csv 
+./AIC ../../data/test.csv cart  # for cart algorithm 
+# ./AIC ../../data/test.csv svr  # for svm algorithm 
+...
+...
+...
+...
+critical values : [ 0.299173 0.235086 0.110689 ]
+partition at threshold 0.299173:[ [ 0 ] [ 1 ] [ 2 ] [ 3 ] ]
+partition at threshold 0.235086:[ [ 0 ] [ 1 ] [ 2 3 ] ]
+partition at threshold 0.110689:[ [ 0 2 3 ] [ 1 ] ]
 ```
 
 
 ``` 
-test.csv
-1, 2, 3, 4
-1, 2, 3, 4
-1, 2, 3, 4
-1, 2, 6, 5
-1, 2, 6, 5
-1, 2, 6, 5
-1, 2, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
-4, 3, 6, 5
+# for test2.csv
+./AIC ../../data/test2.csv cart
+# ./AIC ../../data/test2.csv svr
+
+
+...
+...
+...
+...
+critical values : [ 0.174818 0.0874089 0.0232797 ]
+partition at threshold 0.174818:[ [ 0 ] [ 1 ] [ 2 ] [ 3 ] ]
+partition at threshold 0.0874089:[ [ 0 1 ] [ 2 ] [ 3 ] ]
+partition at threshold 0.0232797:[ [ 0 1 ] [ 2 3 ] ]
+
+
 ```
 
-``` 
-expected output
--- Configuring done
--- Generating done
--- Build files have been written to: /Users/handasontam/Documents/OpenSource/Agglomerative-Info-Clustering/include/build
-Scanning dependencies of target AIC
-[ 50%] Building CXX object CMakeFiles/AIC.dir/cart_demo.cpp.o
-[100%] Linking CXX executable AIC
-[100%] Built target AIC
-1  2  3  4  
-1  2  3  4  
-1  2  3  4  
-1  2  6  5  
-1  2  6  5  
-1  2  6  5  
-1  2  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-4  3  6  5  
-Info-clustering by CL tree approximation:
-for B = {1 }
-cart entropy: 0.174818
-
-for B = {0 }
-cart entropy: 1.57336
-
-for B = {1 0 }
-cart entropy: 1.57336
-
-for B = {2 }
-cart entropy: 0.786681
-
-for B = {0 }
-cart entropy: 1.57336
-
-for B = {2 0 }
-cart entropy: 1.57336
-
-for B = {2 }
-cart entropy: 0.786681
-
-for B = {1 }
-cart entropy: 0.174818
-
-for B = {2 1 }
-cart entropy: 0.174818
-
-for B = {3 }
-cart entropy: 0.0874089
-
-for B = {0 }
-cart entropy: 1.57336
-
-for B = {3 0 }
-cart entropy: 1.57336
-
-for B = {3 }
-cart entropy: 0.0874089
-
-for B = {1 }
-cart entropy: 0.174818
-
-for B = {3 1 }
-cart entropy: 0.174818
-
-for B = {3 }
-cart entropy: 0.0874089
-
-for B = {2 }
-cart entropy: 0.786681
-
-for B = {3 2 }
-cart entropy: 0.907068
-
-critical values : [ 0.786681 0.786681 0.0874089 ]
-partition at threshold 0.786681:[ [ 0 ] [ 1 ] [ 2 ] [ 3 ] ]
-partition at threshold 0.786681:[ [ 0 ] [ 1 2 ] [ 3 ] ]
-partition at threshold 0.0874089:[ [ 0 1 2 ] [ 3 ] ]
-Agglomerative info-clustering:
-for B = {0 }
-cart entropy: 1.57336
-
-for B = {1 }
-cart entropy: 0.174818
-
-for B = {2 }
-cart entropy: 0.786681
-
-for B = {3 }
-cart entropy: 0.0874089
-
-for B = {0 1 }
-cart entropy: 1.57336
-
-for B = {2 }
-cart entropy: 0.786681
-
-for B = {0 2 }
-cart entropy: 1.57336
-
-for B = {0 1 2 }
-cart entropy: 2.125
-
-for B = {2 }
-cart entropy: 0.786681
-
-for B = {0 2 }
-cart entropy: 1.57336
-
-for B = {0 1 2 }
-cart entropy: 2.125
-
-for B = {3 }
-cart entropy: 0.0874089
-
-for B = {0 3 }
-cart entropy: 1.57336
-
-for B = {0 1 3 }
-cart entropy: 2.125
-
-for B = {0 1 2 3 }
-cart entropy: 2.125
-
-for B = {3 }
-cart entropy: 0.0874089
-
-for B = {2 3 }
-cart entropy: 0.907068
-
-for B = {2 0 3 }
-cart entropy: 1.57336
-
-for B = {2 0 1 3 }
-cart entropy: 2.125
-
-for B = {3 }
-cart entropy: 0.0874089
-
-for B = {0 3 }
-cart entropy: 1.57336
-
-for B = {0 2 3 }
-cart entropy: 1.57336
-
-for B = {0 2 1 3 }
-cart entropy: 2.125
-
-for B = {0 2 }
-cart entropy: 1.57336
-
-for B = {1 }
-cart entropy: 0.174818
-
-for B = {3 }
-cart entropy: 0.0874089
-
-for B = {0 2 1 }
-cart entropy: 2.125
-
-for B = {3 }
-cart entropy: 0.0874089
-
-for B = {0 2 3 }
-cart entropy: 1.57336
-
-for B = {0 2 1 3 }
-cart entropy: 2.125
-
-for B = {3 }
-cart entropy: 0.0874089
-
-for B = {0 2 3 }
-cart entropy: 1.57336
-
-for B = {0 2 1 3 }
-cart entropy: 2.125
-
-for B = {0 2 3 }
-cart entropy: 1.57336
-
-for B = {1 }
-cart entropy: 0.174818
-
-for B = {0 2 3 1 }
-cart entropy: 2.125
-
-critical values : [ 0.786681 0.0874089 -0.376819 ]
-partition at threshold 0.786681:[ [ 0 ] [ 1 ] [ 2 ] [ 3 ] ]
-partition at threshold 0.0874089:[ [ 0 2 ] [ 1 ] [ 3 ] ]
-partition at threshold -0.376819:[ [ 0 2 3 ] [ 1 ] ]
+# Generate syncthetic data with Additive White Gaussian Noise model
+``` example usage
+python ../../data/AGWN.py --ngenes 6 --nclusters 3 --nconditions 80 --sigma 0.5 --outcsv ../../data/awgn.csv
+# awgn.csv will be the generated data
+./AIC ../../data/awgn.csv cart
 ```
