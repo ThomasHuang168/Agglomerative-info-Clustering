@@ -44,35 +44,33 @@ namespace IC {
 		}
 
 		Ptr<ml::TrainData> get_dataset(const vector<size_t> &X, const size_t y) const
-		{ 
-			{
-				//vector<vector<double>> genes;
-				//for (auto& row : Genes) {               /* iterate over rows */
-				//	vector<double> temp;
-				//	for (auto &k : X)  {
-				//		temp.push_back(row[k]);
-				//	}
-				//	genes.push_back(temp);
-				//}
-				//
-
-				//vector<vector<double>> target;
-				//for (auto& row : Genes) {               /* iterate over rows */
-				//	vector<double> temp{ row[y] }; 
-				//	target.push_back(temp);
-				//}
-
-				//cv::Mat labels = toMat(target);
-				//cv::Mat mat = toMat(genes);
-
-				//// cout << mat << endl;
-				//// cout << labels << endl;
-				//Ptr<ml::TrainData> data_set =
-				//	cv::ml::TrainData::create(mat, 
-				//	cv::ml::COL_SAMPLE,
-				//	labels
-				//	);
+		{
+			vector<vector<double>> genes;
+			for (auto& row : Genes) {               /* iterate over rows */
+				vector<double> temp;
+				for (auto &k : X)  {
+					temp.push_back(row[k]);
+				}
+				genes.push_back(temp);
 			}
+			
+
+			vector<vector<double>> target;
+			for (auto& row : Genes) {               /* iterate over rows */
+				vector<double> temp{ row[y] }; 
+				target.push_back(temp);
+			}
+
+			cv::Mat labels = toMat(target);
+			cv::Mat mat = toMat(genes);
+
+			// cout << mat << endl;
+			// cout << labels << endl;
+			Ptr<ml::TrainData> data_set =
+				cv::ml::TrainData::create(mat, 
+				cv::ml::COL_SAMPLE,
+				labels
+				);
 
 			{
 				//vector<double> genes;
@@ -101,15 +99,15 @@ namespace IC {
 				//return data_set;
 			}
 
-			cv::Mat labels = toMat(target);
-			cv::Mat mat = toMat(genes);
-			// cout << mat << endl;
-			// cout << labels << endl;
-			Ptr<ml::TrainData> data_set =
-				cv::ml::TrainData::create(mat, 
-				cv::ml::ROW_SAMPLE, 
-				labels
-				);
+			// cv::Mat labels = toMat(target);
+			// cv::Mat mat = toMat(genes);
+			// // cout << mat << endl;
+			// // cout << labels << endl;
+			// Ptr<ml::TrainData> data_set =
+			// 	cv::ml::TrainData::create(mat, 
+			// 	cv::ml::ROW_SAMPLE, 
+			// 	labels
+			// 	);
 			return data_set;
 		}
 
@@ -187,7 +185,6 @@ namespace IC {
 		}
 
 		double mse (const Ptr<ml::TrainData> dataset) const {
-			{
 				// Thomas
 				// train the cart algorithm and return the mse loss
 
@@ -275,9 +272,9 @@ namespace IC {
 					for (size_t j = 0; j < i; j++){
 						// cout << "j: " << j << endl;
 						// cout<<B_[j]<<" ";
-						X[j] = B_[j];
+						X[j] = B[j];
 					}
-					Ptr<ml::TrainData> temp_dataset = get_dataset(X, B_[i]);
+					Ptr<ml::TrainData> temp_dataset = get_dataset(X, B[i]);
 					// cout << "mse: " << mse(temp_dataset) << endl;
 					if (Model == "cart"){
 						h += mse(temp_dataset);

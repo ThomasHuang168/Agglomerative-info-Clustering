@@ -27,8 +27,8 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    //std::string line, val;                  /* string for line & value */
-    //std::vector<std::vector<double>> array;    /* vector of vector<int>  */
+    std::string line, val;                  /* string for line & value */
+    std::vector<std::vector<double>> array;    /* vector of vector<int>  */
 
     while (std::getline (f, line)) {        /* read each line */
         std::vector<double> v;                 /* row vector v */
