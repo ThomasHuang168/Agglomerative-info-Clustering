@@ -27,8 +27,8 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    std::string line, val;                  /* string for line & value */
-    std::vector<std::vector<double>> array;    /* vector of vector<int>  */
+    //std::string line, val;                  /* string for line & value */
+    //std::vector<std::vector<double>> array;    /* vector of vector<int>  */
 
     while (std::getline (f, line)) {        /* read each line */
         std::vector<double> v;                 /* row vector v */
@@ -52,11 +52,36 @@ int main(int argc, char **argv) {
 	cout << "Info-clustering by CL tree approximation:" << endl;
 	vector<size_t> first_node, second_node;
 	vector<double> gamma;
+	size_t powerN = 1;
+	for (size_t i = 0; i < n; i++)
+	{
+		powerN *= 2;
+	}
+	for (size_t i = 1; i < powerN; i++)
+	{
+		size_t nodeSet = i;
+		vector <size_t> node;
+		for (size_t j = 0; j < n; j++)
+		{
+			if (nodeSet % 2)
+			{
+				node.push_back(j);
+				printf("%d", 1);
+			}
+			else
+			{
+				printf("%d", 0);
+			}
+			nodeSet /= 2;
+		}
+		printf("\n");
+		csf(node);
+	}
 	for (size_t i = 0; i < n; i++) {
 		for (size_t j = 0; j < i; j++) {
 			first_node.push_back(i);
 			second_node.push_back(j);
-			double I = csf(vector<size_t> {i}) + csf(vector<size_t> {j}) - csf(vector<size_t> {i, j});
+			double I = csf(vector<size_t> {j}) + csf(vector<size_t> {i}) - csf(vector<size_t> {j, i});
 			gamma.push_back(I);
 		}
 	}

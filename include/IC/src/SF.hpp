@@ -43,21 +43,62 @@ namespace IC {
 			Model = model;
 		}
 
-		Ptr<ml::TrainData> get_dataset(const vector<size_t> &X, const size_t y) const{ 
-			vector<vector<double>> genes;
-			for (auto& row : Genes) {               /* iterate over rows */
-				vector<double> temp;
-				for (auto &k : X)  {
-					temp.push_back(row[k]);
-				}
-				genes.push_back(temp);
+		Ptr<ml::TrainData> get_dataset(const vector<size_t> &X, const size_t y) const
+		{ 
+			{
+				//vector<vector<double>> genes;
+				//for (auto& row : Genes) {               /* iterate over rows */
+				//	vector<double> temp;
+				//	for (auto &k : X)  {
+				//		temp.push_back(row[k]);
+				//	}
+				//	genes.push_back(temp);
+				//}
+				//
+
+				//vector<vector<double>> target;
+				//for (auto& row : Genes) {               /* iterate over rows */
+				//	vector<double> temp{ row[y] }; 
+				//	target.push_back(temp);
+				//}
+
+				//cv::Mat labels = toMat(target);
+				//cv::Mat mat = toMat(genes);
+
+				//// cout << mat << endl;
+				//// cout << labels << endl;
+				//Ptr<ml::TrainData> data_set =
+				//	cv::ml::TrainData::create(mat, 
+				//	cv::ml::COL_SAMPLE,
+				//	labels
+				//	);
 			}
+
+			{
+				//vector<double> genes;
+				//for (auto& row : Genes) {               /* iterate over rows */
+				//	for (auto &k : X)  {
+				//		genes.push_back(row[k]);
+				//	}
+				//}
 			
 
-			vector<vector<double>> target;
-			for (auto& row : Genes) {               /* iterate over rows */
-				vector<double> temp{ row[y] }; 
-				target.push_back(temp);
+				//vector<double> target;
+				//for (auto& row : Genes) {               /* iterate over rows */
+				//	target.push_back(row[y]);
+				//}
+
+				//cv::Mat labels = toRowMat(target);
+				//cv::Mat mat = toRowMat(genes);
+
+				//// cout << mat << endl;
+				//// cout << labels << endl;
+				//Ptr<ml::TrainData> data_set =
+				//	cv::ml::TrainData::create(mat, 
+				//	cv::ml::ROW_SAMPLE,
+				//	labels
+				//	);
+				//return data_set;
 			}
 
 			cv::Mat labels = toMat(target);
@@ -146,8 +187,9 @@ namespace IC {
 		}
 
 		double mse (const Ptr<ml::TrainData> dataset) const {
-			// Thomas
-			// train the cart algorithm and return the mse loss
+			{
+				// Thomas
+				// train the cart algorithm and return the mse loss
 
 			int n_samples = dataset->getNSamples();
 			if (n_samples == 0) {
@@ -169,19 +211,19 @@ namespace IC {
 			// Create a DTrees
 			cv::Ptr<cv::ml::RTrees> dtree = cv::ml::RTrees::create();
 			
-			// set parameters
-			float _priors[] = { 1.0, 10.0 };
-			cv::Mat priors(1, 2, CV_32F, _priors);
-			dtree->setMaxDepth(5);
-			dtree->setMinSampleCount(10);
-			dtree->setRegressionAccuracy(0.01f);
-			dtree->setUseSurrogates(false /* true */);
-			dtree->setMaxCategories(15);
-			dtree->setCVFolds(0 /*10*/); // nonzero causes core dump
-			dtree->setUse1SERule(true);
-			dtree->setTruncatePrunedTree(true);
-			dtree->setPriors( priors );
-			dtree->setPriors(cv::Mat()); // ignore priors for now...
+				// set parameters
+				float _priors[] = { 1.0, 10.0 };
+				cv::Mat priors(1, 2, CV_32F, _priors);
+				dtree->setMaxDepth(5);
+				dtree->setMinSampleCount(10);
+				dtree->setRegressionAccuracy(0.01f);
+				dtree->setUseSurrogates(false /* true */);
+				dtree->setMaxCategories(15);
+				dtree->setCVFolds(0 /*10*/); // nonzero causes core dump
+				dtree->setUse1SERule(true);
+				dtree->setTruncatePrunedTree(true);
+				dtree->setPriors( priors );
+				dtree->setPriors(cv::Mat()); // ignore priors for now...
 			
 			// Now train the model
 			// NB: we are only using the "train" part of the data set
@@ -210,19 +252,22 @@ namespace IC {
 		@param B subvector of elements from the ground set.
 		@return Entropy of the gaussian subvector indexed by elements in B.
 		*/
-		double operator() (const vector<size_t> &B) const {
+		double operator() (const vector<size_t> &B) const 
+		{
 			// Handason
 			size_t n = B.size();
-			vector<size_t> B_ = B;
-			sort(B_.begin(), B_.end());
 			double h = 0;
 			// H(z1, z2, z3) = H(z1) + H(z2|z1) + H(z3|x1, x2)
-			for (size_t i = 0; i < n; i++){
-				if (i == 0){
+			for (size_t i = 0; i < n; i++)
+			{
+				if (i == 0)
+				{
 					// H(z0) = variance of gene 0
-					vector<double> genes_i = get_column_vector(B_[i]);
+					vector<double> genes_i = get_column_vector(B[i]);
 					h += variance(genes_i);  // variance of genes i
-				} else {
+				} 
+				else 
+				{
 					// H(z1|z0), H(z2|x0, x1), ...
 					// X = [0], y = 1, ..., X = [0, 1], y = 2, ...
 					vector<size_t> X(i);
@@ -502,5 +547,75 @@ namespace IC {
 		return min_norm_base(f, 1E-10, 1E-15);
 	}
 
+
+	class DataPreprocessing {
+	public:
+		virtual bool loadFile(string filename, size_t mode = 0) = 0;
+		virtual bool fillMissingData(size_t mode = 0) = 0;
+		virtual bool normalize(size_t mode = 0) = 0;
+		virtual bool quantize(size_t mode = 0) = 0;
+	};
+
+	class CSV : public DataPreprocessing {
+	public:
+		typedef enum ENUM_CSV_MODE {
+			CSV_DEFAULT = 0x0,
+			CSV_VERBOSE = 0x1
+		}CSV_MODE;
+
+		vector<vector<double>> data;
+
+		vector<size_t> MissingDataRow;
+		vector<size_t> MissingDataCol;
+
+		bool loadFile(string filename, size_t mode) {
+			ifstream f;
+			f.open(filename.c_str());
+			if (!f.is_open())
+			{
+				std::cerr << "error: file open failed '" << filename << "'.\n";
+				return false;
+			}
+			string line, val;
+			size_t j = 0;
+			while (std::getline(f, line)) {        /* read each line */
+				std::vector<double> v;                 /* row vector v */
+				std::stringstream s(line);         /* stringstream line */
+				size_t i = 0;
+				while (getline(s, val, ','))       /* get each value (',' delimited) */
+				{
+					double value = 0.0;
+					char *endptr = 0; 
+					value = strtod(val.c_str(), &endptr);
+					if (*endptr != '\0' || endptr == val.c_str()) {
+						value = 0.0;
+						MissingDataRow.push_back(i);
+						MissingDataRow.push_back(j);
+					}
+					v.push_back(value);  /* add to row vector */
+					i++;
+				}
+				data.push_back(v);                /* add row vector to array */
+				j++;
+			}
+			if (CSV_VERBOSE & mode) {
+				for (auto& row : data) {               /* iterate over rows */
+					for (auto& val : row)               /* iterate over vals */
+						std::cout << val << "  ";       /* output value      */
+					std::cout << "\n";                  /* tidy up with '\n' */
+				}
+			}
+			return true;
+		}
+		bool fillMissingData(size_t mode) {
+			return true;
+		}
+		bool normalize(size_t mode) {
+			return true;
+		}
+		bool quantize(size_t mode) {
+			return true;
+		}
+	};
 }
 #endif
